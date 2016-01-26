@@ -41,7 +41,7 @@ int main()
 
 	aiVector3D position(0,10,-30);
 	Camera camera;
-    camera.Init(position); //create a camera
+    camera.Init(&App, position); //create a camera
       
     //prepare OpenGL surface for HSR 
     glClearDepth(1.f); 
@@ -87,11 +87,10 @@ int main()
                 App.close(); 
              
 			//update the camera
-			camera.Update(Event);
- 
-            
-    
+			camera.Update(Event, &App);
         } 
+
+		camera.UpdatePosition();
            
         //Prepare for drawing 
         // Clear color and depth buffer 
