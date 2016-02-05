@@ -29,7 +29,7 @@ Terrain::~Terrain(void)
 
 //interpolate between two values
 float lerp(float start, float end, float t){
-	return start+(end-start)*t;
+	return start + (end - start)*t;
 }
 
 
@@ -58,6 +58,10 @@ float  Terrain::getHeight(float x, float y){
 	return dist;
 }
 
+float Terrain::getHeightWithFile(float x, float y){
+	return 0;
+}
+
 void Terrain::Init(){
 	
 	delete [] vertices;//just in case we've called init before
@@ -72,7 +76,7 @@ void Terrain::Init(){
 			int sqNum=(j+i*gridDepth);
 			int vertexNum=sqNum*3*2; //6 vertices per square (2 tris)
 			float front=lerp(-terrDepth/2,terrDepth/2,(float)j/gridDepth);
-			float back =lerp(-terrDepth/2,terrDepth/2,(float)(j+1)/gridDepth);
+			float back=lerp(-terrDepth/2,terrDepth/2,(float)(j+1)/gridDepth);
 			float left=lerp(-terrWidth/2,terrWidth/2,(float)i/gridDepth);
 			float right=lerp(-terrDepth/2,terrDepth/2,(float)(i+1)/gridDepth);
 			
@@ -110,6 +114,61 @@ void Terrain::Init(){
 		}
 	}
 }
+
+void Terrain::InitWithFileName(std::string name){
+
+	delete[] vertices;//just in case we've called init before
+	vertices = new vector[numVerts];
+	delete[] colors;
+	colors = new vector[numVerts];
+
+	image.loadFromFile(name);
+
+	//interpolate along the edges to generate interior points
+	for (int i = 0; i<gridWidth - 1; i++){ //iterate left to right
+		for (int j = 0; j<gridDepth - 1; j++){//iterate front to back
+			int sqNum = (j + i*gridDepth);
+			int vertexNum = sqNum * 3 * 2; //6 vertices per square (2 tris)
+			float front = lerp(-terrDepth / 2, terrDepth / 2, (float)j / gridDepth);
+			float back = lerp(-terrDepth / 2, terrDepth / 2, (float)(j + 1) / gridDepth);
+			float left = lerp(-terrWidth / 2, terrWidth / 2, (float)i / gridDepth);
+			float right = lerp(-terrDepth / 2, terrDepth / 2, (float)(i + 1) / gridDepth);
+
+			/*
+			back   +-----+	looking from above, the grid is made up of regular squares
+			|tri1/|	'left & 'right' are the x cooded of the edges of the square
+			|   / |	'back' & 'front' are the y coords of the square
+			|  /  |	each square is made of two trianlges (1 & 2)
+			| /   |
+			|/tri2|
+			front  +-----+
+			left   right
+			*/
+			//tri1
+			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, front), front);
+
+			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, front), front);
+
+			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, back), back);
+
+
+			//declare a degenerate triangle
+			//TODO: fix this to draw the correct triangle
+			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, front), front);
+
+			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, back), back);
+
+			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, back), back);
+		}
+	}
+}
+
 
 
 void Terrain::Draw(){

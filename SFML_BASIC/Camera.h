@@ -2,6 +2,7 @@
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <iostream>
 #include "GL/glu.h" 
 
 
@@ -11,8 +12,11 @@ class Camera{
 public:
     aiVector3D position;
 	aiVector3D velocity;
+	aiVector3D originalForward;
     aiVector3D forward;
     aiVector3D up;
+	float m_yAngle = 0;
+	float m_xAngle = 0;
 
 	sf::Vector2i prevMouse;
  
@@ -24,6 +28,7 @@ public:
 	void Init(sf::RenderWindow * window = nullptr, aiVector3D& p = zero, aiVector3D& f = zaxis, aiVector3D& u = yaxis){
         position=p;
         forward=f;
+		originalForward = p;
         up=u;
 		prevMouse = window->getPosition() + sf::Vector2i(window->getSize().x / 2, window->getSize().y / 2);
     }
@@ -55,13 +60,13 @@ public:
 		if (e.type == sf::Event::MouseMoved)
 		{
 			sf::Vector2i mVec = sf::Mouse::getPosition() - prevMouse;
+			sf::Mouse::setPosition(prevMouse);
 			float pi = acos(-1);
 			float yRotate = (mVec.x / 1200.0f) * 2 * pi;
 			float xRotate = (mVec.y / 1200.0f) * 2 * pi;
 
 			TurnRightLeft(yRotate);
 			TurnUpDown(xRotate);
-			sf::Mouse::setPosition(prevMouse);
 			window->pollEvent(e);
 		}
  
@@ -89,15 +94,17 @@ public:
     }
  
     void TurnRightLeft(float angle){
-        // x' = x cos θ − y sin θ
-		// y' = x sin θ + y cos θ
+		m_yAngle += angle;
+		forward.x = cos(m_yAngle);
+		forward.z = sin(m_yAngle);
 
-		forward.x = forward.x * cos(angle) - forward.z * sin(angle);
-		forward.z = forward.z * sin(angle) - forward.x * cos(angle);
+		std::cout << forward.x << ", " << forward.z << std::endl;
     }
          
-	void TurnUpDown(float amount){
-        //TODO
+	void TurnUpDown(float angle){
+		m_xAngle += angle;
+		forward.y = cos(m_xAngle);
+		forward.z = sin(m_xAngle);
     }
  
     void ViewingTransform(){
