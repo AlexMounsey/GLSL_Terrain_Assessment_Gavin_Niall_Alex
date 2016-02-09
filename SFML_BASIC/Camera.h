@@ -1,5 +1,5 @@
 ﻿#pragma comment(lib,"assimp.lib")
-#include <assimp/cimport.h>
+#include <assimp\cimport.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <iostream>
@@ -94,17 +94,16 @@ public:
     }
  
     void TurnRightLeft(float angle){
-		m_yAngle += angle;
-		forward.x = cos(m_yAngle);
-		forward.z = sin(m_yAngle);
-
-		std::cout << forward.x << ", " << forward.z << std::endl;
+		
+		aiQuaternion quatern = aiQuaternion(up, angle*rotationSpeed);
+		forward = quatern.Rotate(forward);
+		//up = quatern.Rotate(up);
     }
          
 	void TurnUpDown(float angle){
-		m_xAngle += angle;
-		forward.y = cos(m_xAngle);
-		forward.z = sin(m_xAngle);
+		aiQuaternion quat = aiQuaternion(crossProduct(forward, up).Normalize(), angle*rotationSpeed);
+		forward = quat.Rotate(forward);
+		//up = quat.Rotate(up);
     }
  
     void ViewingTransform(){
@@ -112,7 +111,12 @@ public:
 			position.x + forward.x, position.y + forward.y, position.z + forward.z, //look at this point //TODO: BUG here!! what is it ??
 					0,1,0); //camera up
     }
- 
+
+	aiVector3D crossProduct(aiVector3D a, aiVector3D b)
+	{
+		aiVector3D crossPro = aiVector3D((a.y*b.z) - (a.z*b.y), (a.z*b.x) - (a.x*b.z), (a.x*b.y) - (a.y*b.x));
+		return crossPro;
+	}
 };
 
 //create some default vectors

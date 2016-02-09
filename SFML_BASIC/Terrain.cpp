@@ -5,8 +5,8 @@
 
 Terrain::Terrain(void)
 {
-	gridWidth=100;
-	gridDepth=100;
+	gridWidth=200;
+	gridDepth=200;
 
 	terrWidth=50; //size of terrain in world units
 	terrDepth=50;
@@ -59,7 +59,8 @@ float  Terrain::getHeight(float x, float y){
 }
 
 float Terrain::getHeightWithFile(float x, float y){
-	return 0;
+	float answer = image.getPixel(((x + 25) * 2) / 100 * image.getSize().x, ((y + 25) * 2) / 100 * image.getSize().y).r / 256.0f;
+	return answer;
 }
 
 void Terrain::Init(){
@@ -91,14 +92,14 @@ void Terrain::Init(){
 			     left   right
 				 */
 			//tri1
-			setPoint(colors[vertexNum],(rand()%255)/255.0,(rand()%255)/255.0,(rand()%255)/255.0);
-			setPoint(vertices[vertexNum++],left,getHeight(left,front),front);
+			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(vertices[vertexNum++], left, getHeight(left, front), front);
 
-			setPoint(colors[vertexNum],(rand()%255)/255.0,(rand()%255)/255.0,(rand()%255)/255.0);
-			setPoint(vertices[vertexNum++],right,getHeight(right,front),front);
+			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(vertices[vertexNum++], right, getHeight(right, front), front);
 
-			setPoint(colors[vertexNum],(rand()%255)/255.0,(rand()%255)/255.0,(rand()%255)/255.0);
-			setPoint(vertices[vertexNum++],right,getHeight(right,back),back);
+			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(vertices[vertexNum++], right, getHeight(right, back), back);
 
 
 			//declare a degenerate triangle
@@ -145,26 +146,32 @@ void Terrain::InitWithFileName(std::string name){
 			left   right
 			*/
 			//tri1
-			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
-			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, front), front);
+			//setPoint(colors[vertexNum],(rand()%255)/255.0,(rand()%255)/255.0,(rand()%255)/255.0);
+			setPoint(colors[vertexNum], getHeightWithFile(left, front), getHeightWithFile(left, front), getHeightWithFile(left, front));
+			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, front) * 5, front);
 
-			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
-			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, front), front);
+			//setPoint(colors[vertexNum],(rand()%255)/255.0,(rand()%255)/255.0,(rand()%255)/255.0);
+			setPoint(colors[vertexNum], getHeightWithFile(right, front), getHeightWithFile(right, front), getHeightWithFile(right, front));
+			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, front) * 5, front);
 
-			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
-			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, back), back);
+			//setPoint(colors[vertexNum],(rand()%255)/255.0,(rand()%255)/255.0,(rand()%255)/255.0);
+			setPoint(colors[vertexNum], getHeightWithFile(right, back), getHeightWithFile(right, back), getHeightWithFile(right, back));
+			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, back) * 5, back);
 
 
 			//declare a degenerate triangle
 			//TODO: fix this to draw the correct triangle
-			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
-			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, front), front);
+			//setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(colors[vertexNum], getHeightWithFile(left, front), getHeightWithFile(left, front), getHeightWithFile(left, front));
+			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, front) * 5, front);
 
-			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
-			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, back), back);
+			//setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(colors[vertexNum], getHeightWithFile(right, back), getHeightWithFile(right, back), getHeightWithFile(right, back));
+			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, back) * 5, back);
 
-			setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
-			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, back), back);
+			//setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(colors[vertexNum], getHeightWithFile(left, back), getHeightWithFile(left, back), getHeightWithFile(left, back));
+			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, back) * 5, back);
 		}
 	}
 }

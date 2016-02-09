@@ -15,9 +15,12 @@
 int main() 
 { 
     // Create the main window 
-    
+	sf::ContextSettings Settings;
+	Settings.depthBits = 24;			// Request a 24 bits depth buffer
+	Settings.stencilBits = 8;			// Request a 8 bits stencil buffer
+	Settings.antialiasingLevel = 16;	// Request 2 levels of antialiasing
+	sf::RenderWindow App(sf::VideoMode(1280, 720, 32), "Terrain Assignment", sf::Style::Close, Settings);
     int width=600,height=600;
-	sf::RenderWindow App(sf::VideoMode(width, height, 32), "SFML OpenGL"); 
     // Create a clock for measuring time elapsed     
     sf::Clock Clock; 
 
@@ -30,6 +33,8 @@ int main()
     glClearColor(0.3f, 0.3f, 0.6f, 0.f); //background colour
     glEnable(GL_DEPTH_TEST); 
     glDepthMask(GL_TRUE); 
+	
+
    
     //// Setup a perspective projection & Camera position 
     glMatrixMode(GL_PROJECTION); 
@@ -51,7 +56,7 @@ int main()
 
 	//Create our Terrain
 	Terrain terrain;
-	terrain.Init();
+	terrain.InitWithFileName("heightmap.png");
 
     // Start game loop 
     while (App.isOpen()) 
