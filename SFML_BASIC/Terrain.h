@@ -14,12 +14,16 @@ class Terrain
 	//I know, very inefficient, but let's run before we walk
 	vector *vertices;
 	vector *colors;
+	vector *texCoords;
 
 	float getHeight(float x, float y);
 	float getHeightWithFile(float x, float y);
 	void setPoint(vector, float, float,float);
 
 	sf::Image image;
+	bool wireframe;
+	
+
 	
 public:
 	Terrain(void);
@@ -28,5 +32,7 @@ public:
 	void Init();
 	void InitWithFileName(std::string name);
 	void Draw();
+	float tallestPoint;
+	void swapWireFrame();
 };
 

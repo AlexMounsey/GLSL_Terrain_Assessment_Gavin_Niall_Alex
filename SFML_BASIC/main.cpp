@@ -26,13 +26,18 @@ int main()
 
 	aiVector3D position(0,10,-30);
 	Camera camera;
-    camera.Init(&App, position); //create a camera
+	camera.Init(position); //create a camera
       
     //prepare OpenGL surface for HSR 
     glClearDepth(1.f); 
-    glClearColor(0.3f, 0.3f, 0.6f, 0.f); //background colour
+    glClearColor(0.0f, 0.0f, 0.0f, 0.f); //background colour
     glEnable(GL_DEPTH_TEST); 
     glDepthMask(GL_TRUE); 
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+
+
+
 	
 
    
@@ -52,12 +57,29 @@ int main()
 	if(!shader.loadFromFile("vertex.glsl","fragment.glsl")){
         exit(1);
     }
-	sf::Shader::bind(&shader);
+
+#pragma region Textures
+	// Textures
+	sf::Texture waterTexture;
+	if (!waterTexture.loadFromFile("water.png")) { std::cout << "Could not load water image"; }
+
+	sf::Texture grassTexture;
+	if (!grassTexture.loadFromFile("grass.png")){ std::cout << "Could not load grass image"; }
+
+	sf::Texture snowTexture;
+	if (!snowTexture.loadFromFile("snowy rock.png")) { std::cout << "Could not load rock image"; }
+#pragma endregion
+	shader.setParameter("waterTex", waterTexture);
+	shader.setParameter("grassTex", grassTexture);
+	shader.setParameter("snowTex", snowTexture);
+
+
 
 	//Create our Terrain
 	Terrain terrain;
-	terrain.InitWithFileName("heightmap.png");
+	terrain.InitWithFileName("heightmap.bmp");
 
+	shader.setParameter("tallestPoint", terrain.tallestPoint);
     // Start game loop 
     while (App.isOpen()) 
     { 
@@ -72,31 +94,39 @@ int main()
             // Escape key : exit 
             if ((Event.type == sf::Event::KeyPressed) && (Event.key.code == sf::Keyboard::Escape)) 
                 App.close(); 
-             
+			if ((Event.type == sf::Event::KeyPressed) && (Event.key.code == sf::Keyboard::I))
+			{ 
+				terrain.swapWireFrame();
+			}
 			//update the camera
-			camera.Update(Event, &App);
+			camera.Update(Event);
         } 
 
-		camera.UpdatePosition();
+		camera.changeProjction();
            
-        //Prepare for drawing 
-        // Clear color and depth buffer 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
-   
-        // Apply some transformations 
-        //initialise the worldview matrix
-		glMatrixMode(GL_MODELVIEW); 
-        glLoadIdentity(); 
+
+		// Clear color and depth buffer 
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Apply some transformations 
+		//initialise the worldview matrix
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
 
 		//get the viewing transform from the camera
 		camera.ViewingTransform();
 
+		sf::Shader::bind(&shader);
+
+
+
 
 		//make the world spin
 		//TODO:probably should remove this in final
-		static float ang=0.0;
-		ang+=0.01f;
-		glRotatef(ang*2,0,1,0);//spin about y-axis
+		//static float ang=0.0;
+		//ang+=0.01f;
+		//glRotatef(ang*2,0,1,0);//spin about y-axis
 		
 
 		

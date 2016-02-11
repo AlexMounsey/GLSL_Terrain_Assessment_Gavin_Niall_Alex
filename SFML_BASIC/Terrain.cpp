@@ -11,7 +11,10 @@ Terrain::Terrain(void)
 	terrWidth=50; //size of terrain in world units
 	terrDepth=50;
 	vertices=NULL;
-	colors=NULL;	
+	wireframe = false;
+	colors=NULL;
+	texCoords = NULL;
+	tallestPoint = 0;
 	
 	//num squares in grid will be width*height, two triangles per square
 	//3 verts per triangle
@@ -25,6 +28,7 @@ Terrain::~Terrain(void)
 {
 	delete [] vertices;
 	delete [] colors;
+	delete[] texCoords;
 }
 
 //interpolate between two values
@@ -60,6 +64,10 @@ float  Terrain::getHeight(float x, float y){
 
 float Terrain::getHeightWithFile(float x, float y){
 	float answer = image.getPixel(((x + 25) * 2) / 100 * image.getSize().x, ((y + 25) * 2) / 100 * image.getSize().y).r / 256.0f;
+	if (tallestPoint < answer)
+	{
+		tallestPoint = answer;
+	}
 	return answer;
 }
 
@@ -122,6 +130,8 @@ void Terrain::InitWithFileName(std::string name){
 	vertices = new vector[numVerts];
 	delete[] colors;
 	colors = new vector[numVerts];
+	delete[] texCoords;
+	texCoords = new vector[numVerts];
 
 	image.loadFromFile(name);
 
@@ -146,30 +156,29 @@ void Terrain::InitWithFileName(std::string name){
 			left   right
 			*/
 			//tri1
-			//setPoint(colors[vertexNum],(rand()%255)/255.0,(rand()%255)/255.0,(rand()%255)/255.0);
+			setPoint(texCoords[vertexNum], 0, 1, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(left, front), getHeightWithFile(left, front), getHeightWithFile(left, front));
 			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, front) * 5, front);
 
-			//setPoint(colors[vertexNum],(rand()%255)/255.0,(rand()%255)/255.0,(rand()%255)/255.0);
+			setPoint(texCoords[vertexNum], 1, 1, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(right, front), getHeightWithFile(right, front), getHeightWithFile(right, front));
 			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, front) * 5, front);
 
-			//setPoint(colors[vertexNum],(rand()%255)/255.0,(rand()%255)/255.0,(rand()%255)/255.0);
+			setPoint(texCoords[vertexNum], 1, 0, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(right, back), getHeightWithFile(right, back), getHeightWithFile(right, back));
 			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, back) * 5, back);
 
 
-			//declare a degenerate triangle
-			//TODO: fix this to draw the correct triangle
-			//setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+
+			setPoint(texCoords[vertexNum], 0, 0, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(left, front), getHeightWithFile(left, front), getHeightWithFile(left, front));
 			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, front) * 5, front);
-
-			//setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			
+			setPoint(texCoords[vertexNum], 0, 1, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(right, back), getHeightWithFile(right, back), getHeightWithFile(right, back));
 			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, back) * 5, back);
 
-			//setPoint(colors[vertexNum], (rand() % 255) / 255.0, (rand() % 255) / 255.0, (rand() % 255) / 255.0);
+			setPoint(texCoords[vertexNum], 0, 0, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(left, back), getHeightWithFile(left, back), getHeightWithFile(left, back));
 			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, back) * 5, back);
 		}
@@ -180,10 +189,19 @@ void Terrain::InitWithFileName(std::string name){
 
 void Terrain::Draw(){
 
-	glBegin(GL_TRIANGLES);
+	if (!wireframe){ glBegin(GL_TRIANGLES); }
+	else{ glBegin(GL_LINES); }
+
 	for(int i =0;i<numVerts;i++){
 			glColor3fv(colors[i]);
 			glVertex3fv(vertices[i]);
+			glTexCoord2fv(texCoords[i]);
+
 	}
 	glEnd();
+}
+
+void Terrain::swapWireFrame()
+{
+	wireframe = !wireframe;
 }
