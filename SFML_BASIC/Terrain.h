@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include "stdafx.h"
+
 class Terrain
 {
 	//size of the mesh forming the terrain
@@ -15,6 +16,7 @@ class Terrain
 	vector *vertices;
 	vector *colors;
 	vector *texCoords;
+	vector *normals;
 
 	float getHeight(float x, float y);
 	float getHeightWithFile(float x, float y);
@@ -31,6 +33,7 @@ public:
 
 	void Init();
 	void InitWithFileName(std::string name);
+	void NormalVector(GLfloat[3] , GLfloat[3] , GLfloat[3], GLfloat[3]);
 	void Draw();
 	float tallestPoint;
 	void swapWireFrame();

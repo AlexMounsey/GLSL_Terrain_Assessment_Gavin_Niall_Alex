@@ -2,10 +2,7 @@
 // Headers 
 //////////////////////////////////////////////////////////// 
 #include "stdafx.h" 
-
 #include <iostream> 
-  
- 
 #include "Terrain.h"
 #include "Camera.h"
 
@@ -26,19 +23,28 @@ int main()
 
 	aiVector3D position(0,10,-30);
 	Camera camera;
-	camera.Init(position); //create a camera
+	camera.Init(&App, position);  //create a camera
+
       
     //prepare OpenGL surface for HSR 
     glClearDepth(1.f); 
     glClearColor(0.0f, 0.0f, 0.0f, 0.f); //background colour
+	glEnable(GL_DEPTH_TEST); // check for depth
+	glEnable(GL_NORMALIZE); // automatically convert normals to unit normals
+	glEnable(GL_LIGHTING); //This enables the possibility of lighting
+	glEnable(GL_LIGHT0); //This enables a single light
     glEnable(GL_DEPTH_TEST); 
     glDepthMask(GL_TRUE); 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 
+	//Giving the light positions
+	GLfloat light_color[] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat light_position[] = { 10.0, 10.0, -100.0, 0.0 };
+	GLfloat light_amb[] = { 3.0, 3.0, 3.0, 1.0 };
 
-
-	
+	GLfloat materialSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // create an array of RGBA values (White)
+	GLfloat materialShininess[] = { 128.0f }; // select value between 0-128, 128=shiniest
 
    
     //// Setup a perspective projection & Camera position 
@@ -47,9 +53,6 @@ int main()
      
     //set up a 3D Perspective View volume
     gluPerspective(90.f, (float)width/height, 1.f, 300.0f);//fov, aspect, zNear, zFar 
- 
-
-
 
 	//load & bind the shader
 	sf::Shader shader;
@@ -80,6 +83,7 @@ int main()
 	terrain.InitWithFileName("heightmap.bmp");
 
 	shader.setParameter("tallestPoint", terrain.tallestPoint);
+
     // Start game loop 
     while (App.isOpen()) 
     { 
@@ -99,10 +103,10 @@ int main()
 				terrain.swapWireFrame();
 			}
 			//update the camera
-			camera.Update(Event);
+			camera.Update(Event, &App);
         } 
 
-		camera.changeProjction();
+		camera.UpdatePosition();
            
 
 		// Clear color and depth buffer 
@@ -111,14 +115,28 @@ int main()
 		// Apply some transformations 
 		//initialise the worldview matrix
 		glMatrixMode(GL_MODELVIEW);
+
 		glLoadIdentity();
 
 
 		//get the viewing transform from the camera
 		camera.ViewingTransform();
 
+
+		//make the world spin
+		//TODO:probably should remove this in final
+		static float ang = 0.0;
+		ang += 0.01f;
+		glRotatef(ang * 2, 0, 1, 0);//spin about y-axis
+
 		sf::Shader::bind(&shader);
 
+
+		glLightfv(GL_LIGHT0, GL_AMBIENT, light_amb); // set color of diffuse component
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color); // set color of diffuse component
+		glLightfv(GL_LIGHT0, GL_SPECULAR, light_color); // set color of specular component
+
+		glLightfv(GL_LIGHT0, GL_POSITION, light_position);   // set position
 
 
 
@@ -140,3 +158,4 @@ int main()
    
     return EXIT_SUCCESS; 
 }
+

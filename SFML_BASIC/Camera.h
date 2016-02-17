@@ -1,95 +1,114 @@
 ﻿#pragma comment(lib,"assimp.lib")
-#include <assimp/cimport.h>
+#include <assimp\cimport.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <iostream>
 #include "GL/glu.h" 
 
-class Camera
-{
-	static aiVector3D zero, yaxis, zaxis, xaxis;
 
+
+class Camera{
+	static aiVector3D zero, yaxis, zaxis;
 public:
 	aiVector3D position;
+	aiVector3D velocity;
+	aiVector3D originalForward;
 	aiVector3D forward;
 	aiVector3D up;
-	aiVector3D right;
+	float m_yAngle = 0;
+	float m_xAngle = 0;
 
-	int w, h;
+	sf::Vector2i prevMouse;
 
 	float forwardSpeed;
 	float rotationSpeed;
 
-	bool perspect;
-	bool ortho;
+	Camera() :forwardSpeed(0.1f), rotationSpeed(0.1f){}
 
-	Camera() :forwardSpeed(0.5f), rotationSpeed(0.1f){}
-
-	void Init(aiVector3D& p = zero, aiVector3D& f = zaxis, aiVector3D& u = yaxis){
+	void Init(sf::RenderWindow * window = nullptr, aiVector3D& p = zero, aiVector3D& f = zaxis, aiVector3D& u = yaxis){
 		position = p;
 		forward = f;
+		originalForward = p;
 		up = u;
-		w = 1280, h = 720;
-		perspect = true;
+		prevMouse = window->getPosition() + sf::Vector2i(window->getSize().x / 2, window->getSize().y / 2);
 	}
 
-	void Update(sf::Event e)
-	{
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::D)){ MoveLeftRight(1); }
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::A)){ MoveLeftRight(-1); }
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::W)){ MoveForwardBack(1); }
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::S)){ MoveForwardBack(-1); }
+	void Update(sf::Event e, sf::RenderWindow * window){//respond to keyboard events
+		if (e.type == sf::Event::KeyPressed) {
+			if (e.key.code == sf::Keyboard::D){
+				MoveLeftRight(+1);
+			}
 
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::Q)){ MoveUpDown(1); }
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::E)){ MoveUpDown(-1); }
+			if (e.key.code == sf::Keyboard::A){
+				MoveLeftRight(-1);
+			}
 
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::Right)){ TurnRightLeft(1); }
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::Left)){ TurnRightLeft(-1); }
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::Up)){ TurnUpDown(1); }
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::Down)){ TurnUpDown(-1); }
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::P)){ perspect = true; }
-		if ((e.type == sf::Event::KeyPressed) && (e.key.code == sf::Keyboard::O)){ perspect = false; }
+			if (e.key.code == sf::Keyboard::W){
+				MoveForwardBack(1);
+			}
+			if (e.key.code == sf::Keyboard::S){
+				MoveForwardBack(-1);
+			}
+
+			if (e.key.code == sf::Keyboard::Space){
+				MoveUpDown(1);
+			}
+			if (e.key.code == sf::Keyboard::LShift){
+				MoveUpDown(-1);
+			}
+		}
+		if (e.type == sf::Event::MouseMoved)
+		{
+			sf::Vector2i mVec = sf::Mouse::getPosition() - prevMouse;
+			sf::Mouse::setPosition(prevMouse);
+			float pi = acos(-1);
+			float yRotate = (mVec.x / 1200.0f) * 2 * pi;
+			float xRotate = (mVec.y / 1200.0f) * 2 * pi;
+
+			TurnRightLeft(yRotate);
+			TurnUpDown(xRotate);
+			window->pollEvent(e);
+		}
+
 	}
 
-	void MoveLeftRight(int dir)
-	{
-		aiVector3D crossp = crossProduct(forward, up);
-		position += crossp.Normalize() * (forwardSpeed*dir);
+	void UpdatePosition(){
+		position += velocity;
+		velocity *= 0.99f;
 	}
-	void MoveUpDown(int dir) { position += (up*(forwardSpeed*dir)); }
-	void MoveForwardBack(int dir) { position += (forward*(forwardSpeed*dir)); }
 
-	void TurnRightLeft(int dir)
-	{
-		aiQuaternion quatern = aiQuaternion(up, dir*rotationSpeed);
+	void MoveLeftRight(int dir){ //Dir=+1=>Right, dir=-1=> Left
+		aiVector3D right;
+		right.x = -forward.z;
+		right.z = forward.x;
+		velocity += (right*(forwardSpeed*dir));
+	}
+
+	void MoveUpDown(int dir){ //Dir=+1=>Right, dir=-1=> Left
+		velocity += (up*(forwardSpeed*dir));
+	}
+
+	void MoveForwardBack(int dir){ //Dir=+1=>Forward, dir=-1=> Back
+
+		velocity += (forward*(forwardSpeed*dir));
+	}
+
+	void TurnRightLeft(float angle){
+
+		aiQuaternion quatern = aiQuaternion(up, angle*rotationSpeed);
 		forward = quatern.Rotate(forward);
-		up = quatern.Rotate(up);
+		//up = quatern.Rotate(up);
 	}
 
-	void TurnUpDown(int dir)
-	{
-		aiQuaternion quat = aiQuaternion(crossProduct(forward, up).Normalize(), -dir*rotationSpeed);
+	void TurnUpDown(float angle){
+		aiQuaternion quat = aiQuaternion(crossProduct(forward, up).Normalize(), angle*rotationSpeed);
 		forward = quat.Rotate(forward);
-		up = quat.Rotate(up);
+		//up = quat.Rotate(up);
 	}
 
-	void changeProjction()
-	{
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		if (perspect)
-		{
-			gluPerspective(90.f, (float)w / h, 0.001f, 300.0f);//fov, aspect, zNear, zFar
-		}
-		else if (!perspect)
-		{
-			glOrtho(-30, 30, -30, 30, 0.001f, 100000);
-		}
-	}
-
-	void ViewingTransform()
-	{
-		gluLookAt(position.x, position.y, position.z,
-			position.x + forward.x, position.y + forward.y, position.z + forward.z,
+	void ViewingTransform(){
+		gluLookAt(position.x, position.y, position.z,// camera position
+			position.x + forward.x, position.y + forward.y, position.z + forward.z, //look at this point //TODO: BUG here!! what is it ??
 			0, 1, 0); //camera up
 	}
 
@@ -104,4 +123,3 @@ public:
 aiVector3D Camera::zero(0.0f);
 aiVector3D Camera::yaxis(0.0f, 1.0f, 0.0f);
 aiVector3D Camera::zaxis(0.0f, 0.0f, 1.0f);
-

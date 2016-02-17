@@ -14,12 +14,23 @@ Terrain::Terrain(void)
 	wireframe = false;
 	colors=NULL;
 	texCoords = NULL;
+	normals = NULL;
 	tallestPoint = 0;
 	
 	//num squares in grid will be width*height, two triangles per square
 	//3 verts per triangle
 	 numVerts=gridDepth*gridWidth*2*3;
 
+
+
+	 GLfloat materialAmbDiff[] = { 0.9f, 0.5f, 0.3f, 1.0f }; // create an array of RGBA values
+	 glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, materialAmbDiff); // set the diffuse & ambient reflection colour for the front of faces
+
+	 GLfloat materialSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // create an array of RGBA values (White)
+	 GLfloat materialShininess[] = { 128.0f }; // select value between 0-128, 128=shiniest
+
+	 glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular); // set the colour of specular reflection
+	 glMaterialfv(GL_FRONT, GL_SHININESS, materialShininess); // set shininess of the material
 
 }
 
@@ -28,7 +39,8 @@ Terrain::~Terrain(void)
 {
 	delete [] vertices;
 	delete [] colors;
-	delete[] texCoords;
+	delete [] texCoords;
+	delete [] normals;
 }
 
 //interpolate between two values
@@ -132,9 +144,12 @@ void Terrain::InitWithFileName(std::string name){
 	colors = new vector[numVerts];
 	delete[] texCoords;
 	texCoords = new vector[numVerts];
+	delete[] normals;
+	normals = new vector[numVerts];
 
 	image.loadFromFile(name);
-
+	GLfloat * vert1, *vert2, *vert3;
+	GLfloat normal[3];
 	//interpolate along the edges to generate interior points
 	for (int i = 0; i<gridWidth - 1; i++){ //iterate left to right
 		for (int j = 0; j<gridDepth - 1; j++){//iterate front to back
@@ -156,31 +171,48 @@ void Terrain::InitWithFileName(std::string name){
 			left   right
 			*/
 			//tri1
+			vert1 = vertices[vertexNum];
 			setPoint(texCoords[vertexNum], 0, 1, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(left, front), getHeightWithFile(left, front), getHeightWithFile(left, front));
 			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, front) * 5, front);
 
+			vert2 = vertices[vertexNum];
 			setPoint(texCoords[vertexNum], 1, 1, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(right, front), getHeightWithFile(right, front), getHeightWithFile(right, front));
 			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, front) * 5, front);
 
+			vert3 = vertices[vertexNum];
 			setPoint(texCoords[vertexNum], 1, 0, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(right, back), getHeightWithFile(right, back), getHeightWithFile(right, back));
 			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, back) * 5, back);
 
+			NormalVector(vert2, vert1, vert3, normal);
+			for (int k = 0; k < 3; k++)
+			{
+				setPoint(normals[vertexNum - k], normal[0], normal[1], normal[2]);
+			}
 
-
+			//tri2
+			vert1 = vertices[vertexNum];
 			setPoint(texCoords[vertexNum], 0, 0, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(left, front), getHeightWithFile(left, front), getHeightWithFile(left, front));
 			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, front) * 5, front);
-			
+
+			vert2 = vertices[vertexNum];
 			setPoint(texCoords[vertexNum], 0, 1, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(right, back), getHeightWithFile(right, back), getHeightWithFile(right, back));
 			setPoint(vertices[vertexNum++], right, getHeightWithFile(right, back) * 5, back);
 
+			vert3 = vertices[vertexNum];
 			setPoint(texCoords[vertexNum], 0, 0, 0);
 			setPoint(colors[vertexNum], getHeightWithFile(left, back), getHeightWithFile(left, back), getHeightWithFile(left, back));
 			setPoint(vertices[vertexNum++], left, getHeightWithFile(left, back) * 5, back);
+
+			NormalVector(vert2, vert1, vert3, normal);
+			for (int k = 0; k < 3; k++)
+			{
+				setPoint(normals[vertexNum - k], normal[0], normal[1], normal[2]);
+			}
 		}
 	}
 }
@@ -193,12 +225,30 @@ void Terrain::Draw(){
 	else{ glBegin(GL_LINES); }
 
 	for(int i =0;i<numVerts;i++){
-			glColor3fv(colors[i]);
-			glVertex3fv(vertices[i]);
-			glTexCoord2fv(texCoords[i]);
+
+		glNormal3fv(normals[i]);
+		glColor3fv(colors[i]);
+		glVertex3fv(vertices[i]);
+		glTexCoord2fv(texCoords[i]);
 
 	}
 	glEnd();
+}
+
+void Terrain::NormalVector(GLfloat p1[3], GLfloat p2[3], GLfloat p3[3], GLfloat n[3])
+{
+	GLfloat v1[3], v2[3]; // two vectors
+
+	for (int i = 0; i<3; i++)
+	{
+		v1[i] = p2[i] - p1[i];
+		v2[i] = p3[i] - p2[i];
+	}
+
+	// calculate cross product of two vectors ( n= v1 x v2)
+	n[0] = v1[1] * v2[2] - v2[1] * v1[2];
+	n[1] = v1[2] * v2[0] - v2[2] * v1[0];
+	n[2] = v1[0] * v2[1] - v2[0] * v1[1];
 }
 
 void Terrain::swapWireFrame()

@@ -48,5 +48,5 @@ void main()
 		 
 	//vec4 color = texture2D(waterTex,gl_TexCoord[0].st);
 	//vec4 color = texture2D(snowTex,gl_TexCoord[0].st);
-    gl_FragColor = color;
+    gl_FragColor = gl_Color * color;
 }
